@@ -22,6 +22,8 @@ _G.print = function(...)
     for i = 1, select("#", ...) do parts[i] = tostring(select(i, ...)) end
     emit(table.concat(parts, "\t") .. "\n")
 end
+-- fengari-web has no io library (no stdio in a browser); 'puts' needs io.write
+if not _G.io then _G.io = {} end
 io.write = function(...)
     for i = 1, select("#", ...) do emit(tostring(select(i, ...))) end
 end
