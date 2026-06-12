@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mini-tcl — a tiny TCL interpreter in Lua</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<h1>mini-tcl</h1>
+<p class="tagline">A small TCL interpreter written in portable Lua,
+distributable as a single self-contained native executable.</p>
+<nav>
+<a href="#try">Try it</a>
+<a href="#install">Install</a>
+<a href="#build">Build</a>
+<a href="#reference">Reference</a>
+<a href="https://github.com/arkenidar/mini-tcl.lua">GitHub</a>
+</nav>
+</header>
+
+<main>
+
+<section id="try">
+<h2>Try it in your browser</h2>
+<p>This is the real <code>mini-tcl.lua</code> running on
+<a href="https://fengari.io/">fengari</a> (a Lua VM in JavaScript) —
+the same file that gets embedded into the native binary.</p>
+<div id="repl">
+<pre id="repl-output"></pre>
+<form id="repl-form">
+<label for="repl-input">%</label>
+<input id="repl-input" type="text" autocomplete="off" spellcheck="false"
+       placeholder="set x 5; puts [expr {$x * 2}]">
+<button type="submit">Run</button>
+</form>
+</div>
+<p class="hint">Examples:
+<code>proc square {n} {return [expr {$n*$n}]}</code> then
+<code>puts [square 9]</code> ·
+<code>foreach i {a b c} {puts $i}</code> ·
+<code>string toupper hello</code> ·
+Arrow keys browse input history.</p>
+</section>
+
+<section id="install">
+<h2>Install</h2>
+<p>Download a prebuilt binary from the
+<a href="https://github.com/arkenidar/mini-tcl.lua/releases">releases page</a>:
+<code>mini-tcl-static</code> (Linux, fully static) or
+<code>mini-tcl.exe</code> (Windows). No installation, no dependencies —
+one executable containing the interpreter and the script.</p>
+<pre>./mini-tcl              # interactive REPL
+./mini-tcl script.tcl a b   # run a script; $argv0/$argv/$argc are set</pre>
+</section>
+
+<section id="build">
+<h2>Build from source</h2>
+<pre>git clone https://github.com/arkenidar/mini-tcl.lua
+cd mini-tcl.lua
+make            # downloads minilua.h once, compiles mini-tcl
+make test       # run the smoke-test suite</pre>
+<p>How it works: a tiny bundled tool (<code>bin2c</code>) turns
+<code>mini-tcl.lua</code> into a C byte array; <code>main.c</code> bundles the
+complete PUC-Rio Lua interpreter via single-header
+<a href="https://github.com/edubart/minilua">minilua.h</a>, loads the embedded
+script and passes command-line arguments through, exactly like the standalone
+<code>lua</code> binary would. Links only against libc and libm.</p>
+<p>Other targets: <code>make static</code> (fully static Linux binary),
+<code>make windows</code> (MinGW cross-build), <code>make install</code>,
+<code>make dist</code>. A CMake build is also provided:
+<code>cmake -B build &amp;&amp; cmake --build build &amp;&amp; ctest --test-dir build</code>.</p>
+<p>The interpreter is plain Lua (5.1–5.5 compatible), so it also runs directly:
+<code>lua mini-tcl.lua</code>.</p>
+</section>
+
+<section id="reference">
+<h2>Language reference</h2>
+
+<h3>Commands</h3>
+<table>
+<tr><th>Command</th><th>Form</th></tr>
+<tr><td>puts</td><td><code>puts ?-nonewline? string</code></td></tr>
+<tr><td>set / unset</td><td><code>set name ?value?</code> · <code>unset name ...</code></td></tr>
+<tr><td>append / incr</td><td><code>append name ?value ...?</code> · <code>incr name ?delta?</code></td></tr>
+<tr><td>expr</td><td><code>expr arg ?arg ...?</code></td></tr>
+<tr><td>if</td><td><code>if cond ?then? body ?elseif cond body ...? ?else body?</code></td></tr>
+<tr><td>while / for</td><td><code>while cond body</code> · <code>for start cond next body</code></td></tr>
+<tr><td>foreach</td><td><code>foreach varList list body</code> (multiple loop vars)</td></tr>
+<tr><td>break / continue</td><td>loop control</td></tr>
+<tr><td>proc</td><td><code>proc name params body</code> — defaults <code>{name default}</code>, trailing <code>args</code> varargs</td></tr>
+<tr><td>return / global</td><td><code>return ?value?</code> · <code>global name ...</code></td></tr>
+<tr><td>eval / catch / error</td><td><code>eval arg ...</code> · <code>catch script ?msgVar?</code> · <code>error message</code></td></tr>
+<tr><td>string</td><td>length index range tolower toupper trim trimleft trimright reverse repeat equal compare first last match</td></tr>
+<tr><td>lists</td><td><code>list llength lindex lappend lrange split join</code> (<code>end</code>/<code>end-N</code> indices)</td></tr>
+<tr><td>info</td><td><code>info exists name</code> · <code>info commands</code></td></tr>
+<tr><td>source / exit</td><td><code>source file.tcl</code> · <code>exit ?status?</code> (native only)</td></tr>
+</table>
+
+<h3>Expressions</h3>
+<p>Operators by precedence: <code>**</code> · <code>* / %</code> ·
+<code>+ -</code> · <code>&lt; &gt; &lt;= &gt;= eq ne</code> ·
+<code>== !=</code> · <code>&amp;&amp;</code> · <code>||</code> ·
+<code>?:</code>; unary <code>- + !</code>; parentheses.
+Functions: <code>abs sqrt sin cos tan asin acos atan exp log floor ceil
+round min max pow fmod int double rand srand</code>.</p>
+
+<h3>Syntax</h3>
+<p>Standard TCL word rules: <code>{braces}</code> verbatim,
+<code>"quotes"</code> with <code>$var</code>, <code>[command]</code> and
+backslash substitution; <code>;</code> separates commands; <code>#</code> at
+command position is a comment (so <code>;#</code> gives trailing comments);
+trailing <code>\</code> continues a line.</p>
+</section>
+
+</main>
+
+<footer>
+<p>Public domain (<a href="https://unlicense.org">Unlicense</a>).
+Bundled Lua / minilua are MIT-licensed.
+· <a href="https://github.com/arkenidar/mini-tcl.lua">Source on GitHub</a></p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.min.js"></script>
+<script src="repl.js"></script>
+</body>
+</html>

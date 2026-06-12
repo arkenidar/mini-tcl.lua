@@ -1,0 +1,11 @@
+# build artifacts
+/mini-tcl
+/mini-tcl.exe
+/mini-tcl-static
+/bin2c
+/mini_tcl_script.h
+*.tar.gz
+/build/
+
+# local backup of the pre-rewrite interpreter (not for publication)
+/mini-tcl-old.lua
