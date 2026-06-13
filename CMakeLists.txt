@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(mini-tcl VERSION 0.2.0 LANGUAGES C)
+project(mini-tcl VERSION 0.2.1 LANGUAGES C)
 
 option(STATIC "Build a fully static binary" OFF)
 
