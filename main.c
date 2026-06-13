@@ -1,6 +1,17 @@
 /* Self-contained launcher: runs the embedded mini-tcl.lua script
  * with a bundled PUC-Rio Lua interpreter (minilua.h).
  */
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+static UINT prev_out_cp, prev_in_cp;
+static void restore_console_cp(void)
+{
+    if (prev_out_cp) SetConsoleOutputCP(prev_out_cp);
+    if (prev_in_cp)  SetConsoleCP(prev_in_cp);
+}
+#endif
+
 #define LUA_IMPL
 #include "minilua.h"
 
@@ -12,7 +23,20 @@
 int main(int argc, char **argv)
 {
     int i;
-    lua_State *L = luaL_newstate();
+    lua_State *L;
+
+#ifdef _WIN32
+    /* The source is UTF-8 (e.g. the em-dash in the banner, and whatever a TCL
+     * script puts). Switch the console to UTF-8 so those bytes render instead
+     * of garbling under the legacy OEM code page, and restore it on exit. */
+    prev_out_cp = GetConsoleOutputCP();
+    prev_in_cp  = GetConsoleCP();
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    atexit(restore_console_cp);
+#endif
+
+    L = luaL_newstate();
     if (!L) {
         fprintf(stderr, "cannot create Lua state: not enough memory\n");
         return EXIT_FAILURE;
