@@ -7,7 +7,8 @@ trap 'rm -f "$TMP"' EXIT
 fail=0
 
 # 1. script mode: full output must match the expected transcript
-"$BIN" "$DIR/smoke.tcl" one two >"$TMP" 2>&1
+# (strip CR so the Windows binary's CRLF stdout still matches the LF fixture)
+"$BIN" "$DIR/smoke.tcl" one two 2>&1 | tr -d '\r' >"$TMP"
 if diff -u "$DIR/smoke.expected" "$TMP"; then
     echo "PASS script mode"
 else
