@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Quick preview inside VS Code. Uses the release build (make wasm).
+      "type": "editor-browser",
+      "request": "launch",
+      "name": "Open mini-tcl REPL (integrated browser)",
+      "url": "file://${workspaceFolder}/docs/index.html"
+    },
+    {
+      // Source-level WASM debugging in external Chrome.
+      // First run `make wasm-debug` so the .wasm carries DWARF, then launch this:
+      // VS Code's JS debugger reads the DWARF and lets you set breakpoints
+      // directly in main-wasm.c / minilua.h. --allow-file-access-from-files lets
+      // Chrome fetch the .wasm over file://.
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug mini-tcl WASM (external Chrome + DWARF)",
+      "url": "file://${workspaceFolder}/docs/index.html",
+      "runtimeArgs": ["--allow-file-access-from-files"],
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}
