@@ -24,9 +24,11 @@ distributable as a single self-contained native executable.</p>
 
 <section id="try">
 <h2>Try it in your browser</h2>
-<p>This is the real <code>mini-tcl.lua</code> running on
-<a href="https://fengari.io/">fengari</a> (a Lua VM in JavaScript) —
-the same file that gets embedded into the native binary.</p>
+<p>This runs the real <code>mini-tcl.lua</code> — the same interpreter that gets
+embedded into the native binary. It prefers the bundled PUC-Rio Lua compiled to
+<strong>WebAssembly</strong> (built with <a href="https://emscripten.org/">emscripten</a>),
+and falls back to <a href="https://fengari.io/">fengari</a> (a Lua VM in
+JavaScript) when the WebAssembly module is unavailable.</p>
 <div id="repl">
 <pre id="repl-output"></pre>
 <form id="repl-form">
@@ -122,7 +124,7 @@ Bundled Lua / minilua are MIT-licensed.
 · <a href="https://github.com/arkenidar/mini-tcl.lua">Source on GitHub</a></p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.min.js"></script>
+<!-- fengari is loaded on demand by repl.js only as a fallback. -->
 <script src="repl.js"></script>
 </body>
 </html>

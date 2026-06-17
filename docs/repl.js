@@ -1,4 +1,9 @@
-/* Interactive mini-tcl REPL backed by fengari (Lua in the browser). */
+/* Interactive mini-tcl REPL.
+ *
+ * Backend priority: the real PUC-Rio Lua compiled to WebAssembly (emcc) first;
+ * if that module is missing or fails to start, fall back to fengari (Lua in
+ * JavaScript). Both expose the same evalLine(text) -> output-string interface,
+ * so the rest of the page doesn't care which one is running. */
 (async function () {
     "use strict";
 
@@ -14,7 +19,35 @@
         output.scrollTop = output.scrollHeight;
     }
 
-    try {
+    function loadScript(src) {
+        return new Promise(function (resolve, reject) {
+            const s = document.createElement("script");
+            s.src = src;
+            s.onload = function () { resolve(); };
+            s.onerror = function () { reject(new Error("failed to load " + src)); };
+            document.head.appendChild(s);
+        });
+    }
+
+    // Backend 1: WebAssembly (real PUC-Rio Lua via emcc).
+    async function setupWasm() {
+        await loadScript("./minitcl-wasm.js");
+        if (typeof window.createMiniTcl !== "function") {
+            throw new Error("createMiniTcl not defined");
+        }
+        const Module = await window.createMiniTcl();
+        const evalFn = Module.cwrap("mini_tcl_eval", "string", ["string"]);
+        return {
+            evalLine: function (line) { return evalFn(line); },
+            label: "real PUC-Rio Lua via WebAssembly",
+        };
+    }
+
+    // Backend 2: fengari (Lua VM in JavaScript), loaded on demand.
+    async function setupFengari() {
+        if (typeof window.fengari === "undefined") {
+            await loadScript("https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.min.js");
+        }
         const [srcResp, glueResp] = await Promise.all([
             fetch("./mini-tcl.lua"),
             fetch("./glue.lua"),
@@ -23,14 +56,32 @@
         if (!glueResp.ok) throw new Error("fetching glue.lua: HTTP " + glueResp.status);
         window.MINITCL_SOURCE = await srcResp.text();
         const glue = await glueResp.text();
+        window.fengari.load(glue, "@glue.lua")();
+        return {
+            evalLine: function (line) { return window.minitclEval(line); },
+            label: "Lua in JavaScript via fengari",
+        };
+    }
 
-        fengari.load(glue, "@glue.lua")();
+    let backend;
+    try {
+        backend = await setupWasm();
+    } catch (wasmErr) {
+        try {
+            backend = await setupFengari();
+            append("WebAssembly unavailable (" + wasmErr + "); using fengari fallback.\n", "banner");
+        } catch (fengariErr) {
+            append("failed to start the REPL: " + fengariErr + "\n", "error");
+            return;
+        }
+    }
 
-        const selfTest = window.minitclEval("expr {6 * 7}");
+    try {
+        const selfTest = backend.evalLine("expr {6 * 7}");
         if (selfTest.trim() !== "42") {
             throw new Error("self-test failed: " + selfTest);
         }
-        append("mini-tcl ready — try:  puts [expr {6 * 7}]\n", "banner");
+        append("mini-tcl ready (" + backend.label + ") — try:  puts [expr {6 * 7}]\n", "banner");
     } catch (e) {
         append("failed to start the REPL: " + e + "\n", "error");
         return;
@@ -48,7 +99,7 @@
         append("% " + line + "\n", "echo");
         let res;
         try {
-            res = window.minitclEval(line);
+            res = backend.evalLine(line);
         } catch (e) {
             res = "error: " + e + "\n";
         }
