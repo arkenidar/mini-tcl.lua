@@ -5,7 +5,18 @@ TARGET    = mini-tcl
 VERSION  ?= 0.2.1
 PREFIX   ?= /usr/local
 MINGW_CC ?= x86_64-w64-mingw32-gcc
+EMCC     ?= emcc
 MINILUA_URL = https://raw.githubusercontent.com/edubart/minilua/main/minilua.h
+
+# Emscripten output: a browser module exposing mini_tcl_eval(line). Lands in
+# docs/ so the GitHub Pages REPL can load it next to repl.js.
+WASM_OUT   = docs/minitcl-wasm.js
+EMCC_OPT  ?= -O2
+EMCC_FLAGS = $(EMCC_OPT) -sASSERTIONS=1 \
+             -sMODULARIZE=1 -sEXPORT_NAME=createMiniTcl \
+             -sENVIRONMENT=web,node -sALLOW_MEMORY_GROWTH=1 \
+             -sEXPORTED_RUNTIME_METHODS=cwrap,UTF8ToString \
+             -sEXPORTED_FUNCTIONS=_mini_tcl_eval,_malloc,_free
 
 DIST_FILES = Makefile bin2c.c main.c mini-tcl.lua minilua.h \
              tests/smoke.tcl tests/smoke.expected tests/run-tests.sh
@@ -18,8 +29,26 @@ $(TARGET): main.c mini_tcl_script.h minilua.h
 mini_tcl_script.h: mini-tcl.lua bin2c
 	./bin2c mini-tcl.lua mini_tcl_script > $@
 
+wasm_glue.h: wasm-glue.lua bin2c
+	./bin2c wasm-glue.lua wasm_glue > $@
+
 bin2c: bin2c.c
 	$(CC) $(CFLAGS) -o $@ bin2c.c
+
+# WebAssembly build (requires emscripten; emcc + node must be on PATH, e.g.
+# `source /path/to/emsdk_env.sh`). Produces docs/minitcl-wasm.{js,wasm}.
+wasm: $(WASM_OUT)
+$(WASM_OUT): main-wasm.c mini_tcl_script.h wasm_glue.h minilua.h
+	$(EMCC) $(EMCC_FLAGS) main-wasm.c -o $@
+
+# Debug build: full DWARF embedded in the .wasm and no optimization, so a
+# DWARF-aware debugger can set breakpoints in main-wasm.c / minilua.h. Overwrites
+# the same docs/minitcl-wasm.* the page loads; rebuild with `make wasm` for
+# release (the -g .wasm is large and unoptimized).
+# EMCC_FLAGS already carries -sASSERTIONS=1; this adds full DWARF, no opt, and
+# SAFE_HEAP bounds/alignment checks on top.
+wasm-debug: mini_tcl_script.h wasm_glue.h minilua.h
+	$(EMCC) $(EMCC_FLAGS) -O0 -g -sSAFE_HEAP=1 main-wasm.c -o $(WASM_OUT)
 
 # Fetched once, then kept in the repo so offline builds work.
 minilua.h:
@@ -57,6 +86,7 @@ dist: minilua.h
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe mini-tcl-static bin2c mini_tcl_script.h \
+	      wasm_glue.h docs/minitcl-wasm.js docs/minitcl-wasm.wasm \
 	      $(TARGET)-*.tar.gz
 
-.PHONY: all static windows run test install uninstall dist clean
+.PHONY: all static windows wasm wasm-debug run test install uninstall dist clean

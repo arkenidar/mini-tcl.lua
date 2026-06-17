@@ -28,6 +28,38 @@ add_custom_command(
     COMMENT "Embedding mini-tcl.lua"
 )
 
+# Second embedded chunk: the WebAssembly output adapter (browser only).
+set(WASM_GLUE_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/wasm_glue.h")
+add_custom_command(
+    OUTPUT "${WASM_GLUE_HEADER}"
+    COMMAND ${CMAKE_COMMAND}
+        -DIN=${CMAKE_CURRENT_SOURCE_DIR}/wasm-glue.lua
+        -DOUT=${WASM_GLUE_HEADER}
+        -DNAME=wasm_glue
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed.cmake
+    DEPENDS wasm-glue.lua cmake/embed.cmake
+    COMMENT "Embedding wasm-glue.lua"
+)
+
+if(EMSCRIPTEN)
+    # Configure with: emcmake cmake -B build-wasm && cmake --build build-wasm
+    # Produces docs/minitcl-wasm.{js,wasm} (same artifact as `make wasm`).
+    # main-wasm.c defines LUA_IMPL and #includes minilua.h itself, so no extra
+    # compile flags are needed here (minilua.h has no include guard).
+    add_executable(minitcl-wasm main-wasm.c "${SCRIPT_HEADER}" "${WASM_GLUE_HEADER}")
+    set_target_properties(minitcl-wasm PROPERTIES
+        OUTPUT_NAME minitcl-wasm
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/docs"
+        SUFFIX ".js")
+    target_link_options(minitcl-wasm PRIVATE
+        "SHELL:-sASSERTIONS=1"
+        "SHELL:-sMODULARIZE=1" "SHELL:-sEXPORT_NAME=createMiniTcl"
+        "SHELL:-sENVIRONMENT=web,node" "SHELL:-sALLOW_MEMORY_GROWTH=1"
+        "SHELL:-sEXPORTED_RUNTIME_METHODS=cwrap,UTF8ToString"
+        "SHELL:-sEXPORTED_FUNCTIONS=_mini_tcl_eval,_malloc,_free")
+    return()
+endif()
+
 add_executable(mini-tcl main.c "${SCRIPT_HEADER}")
 
 find_library(MATH_LIBRARY m)
