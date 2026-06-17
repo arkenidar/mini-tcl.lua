@@ -31,3 +31,14 @@ jobs:
         run: cmake --build build
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up emscripten
+        uses: mymindstorm/setup-emsdk@v14
+      - name: Build the WebAssembly module
+        run: make wasm
+      - name: Smoke-test under node
+        run: node tests/wasm-smoke.mjs

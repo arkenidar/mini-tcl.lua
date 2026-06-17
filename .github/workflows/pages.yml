@@ -22,7 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Assemble site (docs + the interpreter the REPL loads)
+      - name: Set up emscripten
+        uses: mymindstorm/setup-emsdk@v14
+      - name: Build the WebAssembly module
+        run: make wasm
+      - name: Assemble site (docs + WASM module + the interpreter the REPL loads)
         run: |
           mkdir _site
           cp docs/* _site/
