@@ -42,6 +42,25 @@ else
     echo "PASS missing-file exit code"
 fi
 
+# 5. Tk essence: headless (mock canvas backend) transcript diff. Loads the core
+#    plus canvas.lua + tk.lua under a Lua interpreter, so it needs a `lua` on
+#    PATH (independent of $BIN). Skips cleanly if none is available.
+LUA=""
+for c in lua lua5.4 lua5.3 lua5.2 lua5.1 luajit; do
+    if command -v "$c" >/dev/null 2>&1; then LUA=$c; break; fi
+done
+if [ -n "$LUA" ]; then
+    "$LUA" "$DIR/tk-headless.lua" "$DIR/tk-layout.tcl" 2>&1 | tr -d '\r' >"$TMP"
+    if diff -u "$DIR/tk-layout.expected" "$TMP"; then
+        echo "PASS tk essence ($LUA)"
+    else
+        echo "FAIL tk essence (diff above)"
+        fail=1
+    fi
+else
+    echo "SKIP tk essence (no lua interpreter on PATH)"
+fi
+
 if [ "$fail" -eq 0 ]; then
     echo "ALL TESTS PASSED"
 else

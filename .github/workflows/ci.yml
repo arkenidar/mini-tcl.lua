@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Install a Lua interpreter (for the headless Tk-essence test)
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
       - name: Build and test
         run: make test
       - name: Static build
@@ -42,3 +44,18 @@ jobs:
         run: make wasm
       - name: Smoke-test under node
         run: node tests/wasm-smoke.mjs
+
+  # Best-effort compile/link of the SDL3 canvas+Tk hosts. SDL3 dev packages are
+  # not on every runner yet, so this job is informational (it does not gate the
+  # build); the Tk logic itself is covered headlessly by the `make` job above.
+  sdl:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install SDL3 + system Lua dev headers
+        run: sudo apt-get update && sudo apt-get install -y libsdl3-dev liblua5.4-dev
+      - name: Build embedded-Lua host (mode 1)
+        run: make mini-tcl-sdl
+      - name: Build system-Lua host (mode 2)
+        run: make mini-tcl-sdl-system

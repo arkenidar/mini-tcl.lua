@@ -1,0 +1,14 @@
+title : 166 0 68 24
+inc   : 186 28 28 28
+show  : 190 60
+count=0
+after 2 clicks count=2
+drawn: Counter|+|2
+title text=Hits
+after invoke count=3
+name  : 100 90
+agree : 100 122
+who=Hi
+agree=1
+msg=clicked
+done
