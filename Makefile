@@ -35,6 +35,9 @@ wasm_glue.h: wasm-glue.lua bin2c
 canvas_bridge.h: canvas.lua bin2c
 	./bin2c canvas.lua canvas_bridge > $@
 
+tk_bridge.h: tk.lua bin2c
+	./bin2c tk.lua tk_bridge > $@
+
 bin2c: bin2c.c
 	$(CC) $(CFLAGS) -o $@ bin2c.c
 
@@ -53,10 +56,10 @@ $(WASM_OUT): main-wasm.c mini_tcl_script.h wasm_glue.h minilua.h
 wasm-debug: mini_tcl_script.h wasm_glue.h minilua.h
 	$(EMCC) $(EMCC_FLAGS) -O0 -g -sSAFE_HEAP=1 main-wasm.c -o $(WASM_OUT)
 
-# --- SDL3 canvas binary (main-sdl.c) ----------------------------------------
+# --- SDL3 canvas/Tk binary (main-sdl.c) -------------------------------------
 # Three interchangeable Lua linking modes; main-sdl.c is identical across them.
-# The generated canvas_bridge.h embeds canvas.lua next to the interpreter core.
-SDL_GEN  = mini_tcl_script.h canvas_bridge.h
+# The generated *_bridge.h headers embed canvas.lua and tk.lua next to the core.
+SDL_GEN  = mini_tcl_script.h canvas_bridge.h tk_bridge.h
 SDL_LIBS = $(shell pkg-config --cflags --libs sdl3)
 
 # mode 1: embed minilua.h, zero external Lua dependency (default).
@@ -108,7 +111,7 @@ dist: minilua.h
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe mini-tcl-static bin2c mini_tcl_script.h \
-	      wasm_glue.h canvas_bridge.h \
+	      wasm_glue.h canvas_bridge.h tk_bridge.h \
 	      mini-tcl-sdl mini-tcl-sdl-system mini-tcl-sdl-src \
 	      docs/minitcl-wasm.js docs/minitcl-wasm.wasm \
 	      $(TARGET)-*.tar.gz

@@ -22,6 +22,7 @@
 
 #include "mini_tcl_script.h"   /* the frozen interpreter core */
 #include "canvas_bridge.h"     /* canvas.lua: canvas.* + canvas.loop */
+#include "tk_bridge.h"         /* tk.lua: the Tk essence */
 
 static SDL_Window   *g_win;
 static SDL_Renderer *g_ren;
@@ -284,7 +285,8 @@ int main(int argc, char **argv)
     lua_setglobal(L, "arg");
 
     if (!load_chunk(L, mini_tcl_script, mini_tcl_script_len, "@mini-tcl.lua") ||
-        !load_chunk(L, canvas_bridge,   canvas_bridge_len,   "@canvas.lua")) {
+        !load_chunk(L, canvas_bridge,   canvas_bridge_len,   "@canvas.lua")  ||
+        !load_chunk(L, tk_bridge,       tk_bridge_len,       "@tk.lua")) {
         lua_close(L);
         return EXIT_FAILURE;
     }
