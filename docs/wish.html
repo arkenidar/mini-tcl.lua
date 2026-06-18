@@ -18,6 +18,22 @@
     touch-action: none;
 }
 #wish-canvas:focus { outline: 1px solid var(--accent); }
+#wish-script-form { margin-top: 1rem; }
+#wish-script {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 9rem;
+    background: #14161b;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: .95rem;
+    padding: .6rem;
+    resize: vertical;
+}
+#wish-script:focus { outline: 1px solid var(--accent); }
+#wish-script-form button { margin-top: .5rem; }
 </style>
 </head>
 <body>
@@ -54,8 +70,11 @@ them (buttons, the entry, the checkbutton, the scale).</p>
 </form>
 </div>
 
-<p class="hint">Try this sequence, one line at a time:</p>
-<pre class="sample">button .b -text "Click me" -command {incr n}
+<p class="hint">Or enter many commands at once and run them together
+(<kbd>Ctrl/Cmd+Enter</kbd> also runs):</p>
+<form id="wish-script-form">
+<textarea id="wish-script" spellcheck="false" autocomplete="off"># a whole little app — edit freely, then press Run
+button .b -text "Click me" -command {incr n}
 label .out -textvariable n
 set n 0
 pack .b -side top -pady 8
@@ -63,7 +82,9 @@ pack .out -side top
 entry .e -textvariable who -width 16
 pack .e -side top -pady 8
 scale .s -from 0 -to 100 -variable v -length 400
-pack .s -side top</pre>
+pack .s -side top</textarea>
+<button type="submit">Run script ▶</button>
+</form>
 <p class="hint">Then click the button (the count rises), click the entry and
 type, and drag the slider — all on the canvas.</p>
 </section>

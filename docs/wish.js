@@ -143,5 +143,28 @@
                 ev.preventDefault();
             }
         });
+
+        // Batch input: run a whole script (many commands) at once. evalScript
+        // already treats newlines/semicolons as command separators, so the
+        // textarea contents go through in a single evalTk call.
+        var scriptForm = document.getElementById("wish-script-form");
+        var scriptBox = document.getElementById("wish-script");
+        function runScript() {
+            var src = scriptBox.value;
+            if (!src.trim()) return;
+            var n = src.trim().split("\n").length;
+            append("% [script: " + n + " line" + (n === 1 ? "" : "s") + "]\n", "echo");
+            var res;
+            try { res = window.evalTk(src); }
+            catch (e) { res = "error: " + e + "\n"; }
+            if (res) append(res, "result");
+            canvas.focus();
+        }
+        if (scriptForm) {
+            scriptForm.addEventListener("submit", function (ev) { ev.preventDefault(); runScript(); });
+            scriptBox.addEventListener("keydown", function (ev) {
+                if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") { ev.preventDefault(); runScript(); }
+            });
+        }
     })();
 })();
