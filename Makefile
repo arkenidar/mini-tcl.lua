@@ -32,6 +32,9 @@ mini_tcl_script.h: mini-tcl.lua bin2c
 wasm_glue.h: wasm-glue.lua bin2c
 	./bin2c wasm-glue.lua wasm_glue > $@
 
+canvas_bridge.h: canvas.lua bin2c
+	./bin2c canvas.lua canvas_bridge > $@
+
 bin2c: bin2c.c
 	$(CC) $(CFLAGS) -o $@ bin2c.c
 
@@ -49,6 +52,25 @@ $(WASM_OUT): main-wasm.c mini_tcl_script.h wasm_glue.h minilua.h
 # SAFE_HEAP bounds/alignment checks on top.
 wasm-debug: mini_tcl_script.h wasm_glue.h minilua.h
 	$(EMCC) $(EMCC_FLAGS) -O0 -g -sSAFE_HEAP=1 main-wasm.c -o $(WASM_OUT)
+
+# --- SDL3 canvas binary (main-sdl.c) ----------------------------------------
+# Three interchangeable Lua linking modes; main-sdl.c is identical across them.
+# The generated canvas_bridge.h embeds canvas.lua next to the interpreter core.
+SDL_GEN  = mini_tcl_script.h canvas_bridge.h
+SDL_LIBS = $(shell pkg-config --cflags --libs sdl3)
+
+# mode 1: embed minilua.h, zero external Lua dependency (default).
+mini-tcl-sdl: main-sdl.c $(SDL_GEN) minilua.h
+	$(CC) $(CFLAGS) -DUSE_MINILUA -o $@ main-sdl.c $(SDL_LIBS) $(LDLIBS)
+
+# mode 2: link the system liblua5.4 (needs liblua5.4-dev; pkg-config name lua-5.4).
+mini-tcl-sdl-system: main-sdl.c $(SDL_GEN)
+	$(CC) $(CFLAGS) $(shell pkg-config --cflags lua-5.4) -o $@ main-sdl.c \
+	      $(SDL_LIBS) $(shell pkg-config --libs lua-5.4) $(LDLIBS)
+
+# mode 3: link a vendored lua/ source tree built to lua/liblua.a.
+mini-tcl-sdl-src: main-sdl.c $(SDL_GEN) lua/liblua.a
+	$(CC) $(CFLAGS) -Ilua/src -o $@ main-sdl.c $(SDL_LIBS) lua/liblua.a $(LDLIBS)
 
 # Fetched once, then kept in the repo so offline builds work.
 minilua.h:
@@ -86,7 +108,10 @@ dist: minilua.h
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe mini-tcl-static bin2c mini_tcl_script.h \
-	      wasm_glue.h docs/minitcl-wasm.js docs/minitcl-wasm.wasm \
+	      wasm_glue.h canvas_bridge.h \
+	      mini-tcl-sdl mini-tcl-sdl-system mini-tcl-sdl-src \
+	      docs/minitcl-wasm.js docs/minitcl-wasm.wasm \
 	      $(TARGET)-*.tar.gz
 
-.PHONY: all static windows wasm wasm-debug run test install uninstall dist clean
+.PHONY: all static windows wasm wasm-debug sdl run test install uninstall dist clean
+sdl: mini-tcl-sdl

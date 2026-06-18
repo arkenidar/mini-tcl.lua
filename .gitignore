@@ -5,6 +5,10 @@
 /bin2c
 /mini_tcl_script.h
 /wasm_glue.h
+/canvas_bridge.h
+/mini-tcl-sdl
+/mini-tcl-sdl-system
+/mini-tcl-sdl-src
 *.tar.gz
 /build/
 /build-wasm/
