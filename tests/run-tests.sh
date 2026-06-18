@@ -57,6 +57,16 @@ if [ -n "$LUA" ]; then
         echo "FAIL tk essence (diff above)"
         fail=1
     fi
+
+    # 6. Same scenario through canvas.lua's web (js_*) backend branch must yield
+    #    the identical transcript — "same TCL script, unmodified, on web".
+    "$LUA" "$DIR/tk-web-headless.lua" "$DIR/tk-layout.tcl" 2>&1 | tr -d '\r' >"$TMP"
+    if diff -u "$DIR/tk-layout.expected" "$TMP"; then
+        echo "PASS tk web backend ($LUA)"
+    else
+        echo "FAIL tk web backend (diff above)"
+        fail=1
+    fi
 else
     echo "SKIP tk essence (no lua interpreter on PATH)"
 fi
