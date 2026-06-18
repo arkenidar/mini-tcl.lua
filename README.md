@@ -55,6 +55,36 @@ lua mini-tcl.lua script.tcl   # script mode
 | `make install` | Install stripped binary to `$(PREFIX)/bin` (default /usr/local) |
 | `make dist`    | Source tarball `mini-tcl-$(VERSION).tar.gz`                     |
 | `make clean`   | Remove build artifacts (keeps `minilua.h`)                      |
+| `make mini-tcl-sdl` | GUI binary with the canvas + Tk essence (SDL3, embedded Lua) |
+| `make mini-tcl-sdl-system` | same, linking system `liblua5.4` (needs `liblua5.4-dev`) |
+
+### GUI: canvas drawing + a Tk essence (SDL3)
+
+`mini-tcl-sdl` adds a drawing surface and a small, **authentic-Tk** widget
+toolkit on top of the same interpreter — the core is untouched; everything is
+registered through the open command registry in two guarded Lua files
+(`canvas.lua`, `tk.lua`). The same script is meant to run unmodified on every
+backend (desktop now; web/Android share the contract).
+
+```sh
+make mini-tcl-sdl
+./mini-tcl-sdl examples/tk-demo.tcl      # buttons, entry, checkbutton, scale, grid+pack
+./mini-tcl-sdl examples/canvas-demo.tcl  # raw canvas.loop animation, no widgets
+```
+
+```tcl
+# authentic Tk: dotted widget paths, -option/value, per-widget commands
+button .b -text "Click" -command {incr n}
+label  .out -textvariable n
+set n 0
+pack .b -side top
+pack .out -side top
+bind .out <Button-1> {set n 0}
+```
+
+Widgets: `frame label button entry checkbutton scale canvas`; geometry: `pack`,
+`grid`; control: `bind focus winfo wm update`. The Tk logic is tested headlessly
+(mock backend, no display) and is part of `make test`.
 
 ### CMake (optional alternative)
 

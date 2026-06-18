@@ -18,8 +18,10 @@ EMCC_FLAGS = $(EMCC_OPT) -sASSERTIONS=1 \
              -sEXPORTED_RUNTIME_METHODS=cwrap,UTF8ToString \
              -sEXPORTED_FUNCTIONS=_mini_tcl_eval,_malloc,_free
 
-DIST_FILES = Makefile bin2c.c main.c mini-tcl.lua minilua.h \
-             tests/smoke.tcl tests/smoke.expected tests/run-tests.sh
+DIST_FILES = Makefile bin2c.c main.c main-sdl.c mini-tcl.lua canvas.lua tk.lua \
+             minilua.h tests/smoke.tcl tests/smoke.expected tests/run-tests.sh \
+             tests/tk-headless.lua tests/tk-layout.tcl tests/tk-layout.expected \
+             examples/tk-demo.tcl examples/canvas-demo.tcl
 
 all: $(TARGET)
 
@@ -103,9 +105,13 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 
 dist: minilua.h
-	mkdir -p $(TARGET)-$(VERSION)/tests
-	cp Makefile bin2c.c main.c mini-tcl.lua minilua.h $(TARGET)-$(VERSION)/
-	cp tests/smoke.tcl tests/smoke.expected tests/run-tests.sh $(TARGET)-$(VERSION)/tests/
+	mkdir -p $(TARGET)-$(VERSION)/tests $(TARGET)-$(VERSION)/examples
+	cp Makefile bin2c.c main.c main-sdl.c mini-tcl.lua canvas.lua tk.lua minilua.h \
+	   $(TARGET)-$(VERSION)/
+	cp tests/smoke.tcl tests/smoke.expected tests/run-tests.sh \
+	   tests/tk-headless.lua tests/tk-layout.tcl tests/tk-layout.expected \
+	   $(TARGET)-$(VERSION)/tests/
+	cp examples/tk-demo.tcl examples/canvas-demo.tcl $(TARGET)-$(VERSION)/examples/
 	tar czf $(TARGET)-$(VERSION).tar.gz $(TARGET)-$(VERSION)
 	rm -rf $(TARGET)-$(VERSION)
 

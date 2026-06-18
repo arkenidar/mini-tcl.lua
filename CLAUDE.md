@@ -12,9 +12,42 @@
 Tcl.commands["name"] = function(words, frame) -> code, value
 ```
 
-## Current task: SDL3 canvas bridge
+## Status: SDL3 canvas bridge + Tk essence — IMPLEMENTED (desktop)
 
-Give TCL scripts a drawing surface. Targets: desktop (Windows + Debian), web (Fengari+Canvas2D), maybe Android (SDL3).
+The canvas bridge and a Tk-essence widget toolkit now exist and are tested. Build
+with `make mini-tcl-sdl` (mode 1) or `make mini-tcl-sdl-system` (mode 2, needs
+`liblua5.4-dev`; pkg-config module is `lua-5.4`). Run a script:
+`./mini-tcl-sdl examples/tk-demo.tcl` (Tk) or `examples/canvas-demo.tcl` (raw loop).
+
+File map (each layer is one file; the interpreter core is untouched):
+- `main-sdl.c` — SDL3 host. Injects `sdl_*` draw/input globals + `sdl_poll_event`,
+  `sdl_size`, `sdl_text` (built-in `SDL_RenderDebugText`, 8×8 font), and drives the
+  blocking loop (`run_loop`). Embeds the core + both bridges via bin2c headers.
+- `canvas.lua` — guarded bridge: `if type(sdl_line)=="function"` (desktop) /
+  `elseif type(js_canvas_line)` (web, future). Registers `canvas.color/clear/
+  present/pixel/line/rect/fill/text/ticks/size` and `canvas.loop {body}`; wires
+  `tcl.poll_event` and `tcl.canvas`.
+- `tk.lua` — the Tk essence. Widgets `frame/label/button/entry/checkbutton/scale/
+  canvas`; geometry `pack` + `grid`; `bind/focus/winfo/wm/update`. Each widget path
+  becomes a command (`.b configure/cget/invoke`). Draws via `canvas.*`, dispatches
+  input from `tcl.poll_event`. Publishes the per-frame body as `__canvas_loop_body`
+  (a Lua function); the C launcher starts the loop after the script (wish's implicit
+  mainloop).
+
+Tests: `tests/tk-headless.lua` loads core+canvas+tk under a **mock backend** (no
+SDL/display) and runs `tests/tk-layout.tcl`, transcript-diffed by `run-tests.sh`
+(step 5) across Lua versions. `make test` covers it when a `lua` interpreter is on
+PATH.
+
+> Generated headers (`mini_tcl_script.h`, `canvas_bridge.h`, `tk_bridge.h`) are
+> bin2c output and **Dropbox reverts them to stale placeholders** — if an SDL build
+> fails with a parse error in `*_script.h`/`*_bridge.h`, `rm` them and rebuild.
+
+### Original brief (web + Android still to do)
+
+Give TCL scripts a drawing surface. Targets: desktop (Windows + Debian) — done;
+web (Fengari+Canvas2D) and Android (SDL3) — the contract is ready (`canvas.lua`
+has the `js_*` branch; `tk.lua` is platform-blind) but not yet wired.
 
 ### Hard constraints
 
