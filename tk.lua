@@ -54,7 +54,8 @@ local function win_size()
     local fn = cmds["canvas.size"]
     if fn then
         local _, s = fn({ "canvas.size" }, globals)
-        local w, h = tostring(s):match("(%d+)%s+(%d+)")
+        -- accept ints or floats (a JS/fengari backend returns "640.0 480.0")
+        local w, h = tostring(s):match("([%d%.]+)%s+([%d%.]+)")
         if w then return tonumber(w), tonumber(h) end
     end
     return 640, 480

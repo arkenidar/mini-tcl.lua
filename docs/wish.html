@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wish — an interactive Tcl/Tk shell in the browser</title>
+<link rel="stylesheet" href="style.css">
+<style>
+#wish-canvas {
+    display: block;
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    background: #14161b;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    touch-action: none;
+}
+#wish-canvas:focus { outline: 1px solid var(--accent); }
+</style>
+</head>
+<body>
+<header>
+<h1>wish</h1>
+<p class="tagline">The interactive Tcl/Tk shell for mini-tcl's Tk essence —
+running live in your browser, command by command.</p>
+<nav>
+<a href="index.html">mini-tcl REPL</a>
+<a href="#try">Try it</a>
+<a href="https://github.com/arkenidar/mini-tcl.lua">GitHub</a>
+</nav>
+</header>
+
+<main>
+
+<section id="try">
+<h2>Interactive Tk console (wish)</h2>
+<p>This runs the real <code>mini-tcl.lua</code> + <code>canvas.lua</code> +
+<code>tk.lua</code> under <a href="https://fengari.io/">fengari</a> (a Lua VM in
+JavaScript). Type authentic Tk commands below — one per line — and the widgets
+appear and update on the canvas. Click and type <em>on the canvas</em> to drive
+them (buttons, the entry, the checkbutton, the scale).</p>
+
+<canvas id="wish-canvas" width="640" height="480" tabindex="0"></canvas>
+
+<div id="repl">
+<pre id="repl-output"></pre>
+<form id="repl-form">
+<label for="repl-input">%</label>
+<input id="repl-input" type="text" autocomplete="off" spellcheck="false"
+       placeholder='button .b -text "Click me" -command {incr n}'>
+<button type="submit">Run</button>
+</form>
+</div>
+
+<p class="hint">Try this sequence, one line at a time:</p>
+<pre class="sample">button .b -text "Click me" -command {incr n}
+label .out -textvariable n
+set n 0
+pack .b -side top -pady 8
+pack .out -side top
+entry .e -textvariable who -width 16
+pack .e -side top -pady 8
+scale .s -from 0 -to 100 -variable v -length 400
+pack .s -side top</pre>
+<p class="hint">Then click the button (the count rises), click the entry and
+type, and drag the slider — all on the canvas.</p>
+</section>
+
+</main>
+
+<script src="wish.js"></script>
+</body>
+</html>
